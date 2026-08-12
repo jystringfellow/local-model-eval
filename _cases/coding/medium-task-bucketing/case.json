@@ -1,0 +1,8 @@
+{
+  "id": "coding-medium-task-bucketing",
+  "category": "coding",
+  "difficulty": "medium",
+  "task": "Implement BucketArtifacts in package bucket. It receives projects and work artifacts and must assign each artifact to exactly one project or \"unrelated\". Match case-insensitively using explicit project signals: project name, project code, ticket prefix followed by '-', or any configured alias as a whole word/phrase. If signals from multiple projects occur, choose the project with the greatest number of distinct matched signals; ties must be unrelated. Do not use loose substring matches inside larger alphanumeric words. Return assignments in input artifact order.",
+  "visible_test_command": ["go", "test", "./..."],
+  "verify_command": ["go", "test", "./..."]
+}

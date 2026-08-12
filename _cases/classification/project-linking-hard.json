@@ -1,0 +1,19 @@
+{
+  "id": "work-context-project-linking-hard",
+  "category": "classification",
+  "description": "Resolve indirect and ambiguous work artifacts. Prefer strong semantic evidence and leave genuinely ambiguous items unrelated.",
+  "projects": [
+    {"id":"atlas","name":"Project Atlas","description":"Acme identity rollout: SAML/Okta, security review, Priya and Marco."},
+    {"id":"nimbus","name":"Project Nimbus","description":"Usage billing migration: metering, invoice reconciliation, Elena and Sam."},
+    {"id":"cedar","name":"Project Cedar","description":"Mobile accessibility redesign: VoiceOver, dynamic type, navigation, Dana."}
+  ],
+  "artifacts": [
+    {"id":"h1","type":"slack","text":"Marco: their security team finally approved the metadata; staging can move forward."},
+    {"id":"h2","type":"email","text":"Elena says the partial-month discrepancy is down to when quantity snapshots are rounded."},
+    {"id":"h3","type":"meeting","text":"Dana: screen reader focus jumps behind the modal after closing the picker."},
+    {"id":"h4","type":"slack","text":"Priya and Sam are both joining the customer call about launch timing."},
+    {"id":"h5","type":"commit","text":"fix: preserve focus order when dismissing modal navigation"},
+    {"id":"h6","type":"email","text":"Marco: Okta test tenant is ready; ACS value still needs confirmation."}
+  ],
+  "expected": {"h1":"atlas","h2":"nimbus","h3":"cedar","h4":"unrelated","h5":"cedar","h6":"atlas"}
+}

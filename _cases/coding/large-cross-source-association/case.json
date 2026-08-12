@@ -1,0 +1,8 @@
+{
+  "id": "coding-large-cross-source-association",
+  "category": "coding",
+  "difficulty": "large",
+  "task": "Implement Resolve in package association. This simulates project association across Slack, email, commit, and meeting artifacts. A project can be matched by its exact name, code/ticket prefix, aliases, or people. Each distinct signal contributes its configured weight (name=5, code=5, alias=3, person=2). Signals are case-insensitive and must respect alphanumeric boundaries. An artifact is assigned only when the best project score is >=5 and exceeds the second-best score by at least 2; otherwise it is unrelated. After direct assignments, an unassigned artifact may inherit a project from a thread parent (ParentID) only if the parent is directly assigned and the child contains no explicit signal for any other project. Preserve input order and include a reason containing the matched signal names or 'thread-parent'. Inspect the existing package types and helpers; make minimal changes and run tests.",
+  "visible_test_command": ["go", "test", "./..."],
+  "verify_command": ["go", "test", "./..."]
+}

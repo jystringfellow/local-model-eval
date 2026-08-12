@@ -1,0 +1,14 @@
+{
+  "ollama_url": "http://localhost:11434",
+  "context_size": 65536,
+  "temperature": 0,
+  "max_agent_steps": 16,
+  "models": [
+    "qwen3.6:35b-mlx",
+    "north-mini-code-1.0:mlx-nvfp4",
+    "north-mini-code-1.0:mlx-mxfp8",
+    "muse-glimmer:30b-mlx",
+    "gemma4:31b-mlx",
+    "gemma4:12b-mlx"
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "work-context-project-linking-01",
+  "category": "classification",
+  "description": "Link mixed work artifacts to the correct project or unrelated bucket.",
+  "projects": [
+    {"id":"atlas","name":"Project Atlas","description":"Enterprise SSO rollout for Acme Corp. Key people: Priya and Marco. Jira prefix ATLAS."},
+    {"id":"nimbus","name":"Project Nimbus","description":"Billing migration to usage-based invoicing. Key people: Elena and Sam. Git branch convention nimbus/*."},
+    {"id":"cedar","name":"Project Cedar","description":"Internal mobile redesign and accessibility work. Key people: Dana. Initiative code CEDAR."}
+  ],
+  "artifacts": [
+    {"id":"a1","type":"slack","text":"Priya: Acme security approved the SAML metadata. Can we get the ACS URL into staging today?"},
+    {"id":"a2","type":"email","text":"Subject: invoice cutover reconciliation\nElena: Finance signed off on the usage export. Remaining issue is prorating partial months."},
+    {"id":"a3","type":"commit","text":"feat(auth): validate audience in SAML assertion\nRefs ATLAS-184"},
+    {"id":"a4","type":"meeting","text":"Mobile weekly: Dana reviewed contrast failures in the new navigation and VoiceOver order."},
+    {"id":"a5","type":"commit","text":"fix: round metered quantity before invoice aggregation\nbranch nimbus/reconciliation"},
+    {"id":"a6","type":"email","text":"Subject: dentist appointment moved to Thursday"},
+    {"id":"a7","type":"slack","text":"Marco: The customer wants Okta first; Entra can follow after launch."},
+    {"id":"a8","type":"meeting","text":"Design crit: tab bar labels still truncate at large dynamic type sizes. CEDAR follow-up with Dana."}
+  ],
+  "expected": {
+    "a1":"atlas","a2":"nimbus","a3":"atlas","a4":"cedar","a5":"nimbus","a6":"unrelated","a7":"atlas","a8":"cedar"
+  }
+}

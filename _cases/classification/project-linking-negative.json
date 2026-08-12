@@ -1,0 +1,16 @@
+{
+  "id": "work-context-negative-control",
+  "category": "classification",
+  "description": "Avoid false-positive project associations when surface words overlap but evidence is unrelated.",
+  "projects": [
+    {"id":"atlas","name":"Project Atlas","description":"Acme enterprise SSO rollout using Okta and SAML."},
+    {"id":"nimbus","name":"Project Nimbus","description":"Usage-based billing and invoice migration."}
+  ],
+  "artifacts": [
+    {"id":"n1","type":"email","text":"Your Atlas Coffee subscription has shipped."},
+    {"id":"slack","type":"slack","text":"Clouds looked like nimbus formations on the hike yesterday."},
+    {"id":"n3","type":"commit","text":"docs: add generic SAML glossary for developer onboarding"},
+    {"id":"n4","type":"meeting","text":"Finance all-hands discussed annual budget planning, not product billing."}
+  ],
+  "expected": {"n1":"unrelated","slack":"unrelated","n3":"unrelated","n4":"unrelated"}
+}

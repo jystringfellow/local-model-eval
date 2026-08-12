@@ -1,0 +1,6 @@
+{
+  "id": "assistant-concise-decision-01",
+  "category": "basic",
+  "prompt": "Answer with exactly one token: yes or no. Is 17 a prime number?",
+  "expected_exact": "yes"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "coding-small-normalize-key",
+  "category": "coding",
+  "difficulty": "small",
+  "task": "Fix NormalizeKey so it converts arbitrary human labels into stable lowercase kebab-case keys. Requirements: trim surrounding whitespace; lowercase letters; treat any run of non-alphanumeric characters as one hyphen; never emit leading/trailing hyphens; return empty for input containing no letters or digits. Preserve Unicode letters and digits.",
+  "visible_test_command": ["go", "test", "./..."],
+  "verify_command": ["go", "test", "./..."]
+}

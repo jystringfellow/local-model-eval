@@ -1,0 +1,6 @@
+{
+  "id": "assistant-instruction-following-01",
+  "category": "basic",
+  "prompt": "Return exactly three lowercase words separated by commas. The words must be: plan, build, verify. Do not add spaces or punctuation other than the commas.",
+  "expected_exact": "plan,build,verify"
+}
