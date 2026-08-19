@@ -8,8 +8,14 @@ import (
 )
 
 type agg struct {
-	n, pass                        int
-	score, wall, promptTPS, outTPS float64
+	n, pass, errors int
+	formatN         int
+	formatPass      int
+	completed       int
+	score           float64
+	wall            []float64
+	promptTPS       []float64
+	outTPS          []float64
 }
 
 func Print(results []bench.Result) {
@@ -27,10 +33,24 @@ func Print(results []bench.Result) {
 		if r.Passed {
 			a.pass++
 		}
+		if r.Error != "" {
+			a.errors++
+		}
+		if r.FormatPassed != nil {
+			a.formatN++
+			if *r.FormatPassed {
+				a.formatPass++
+			}
+		}
 		a.score += r.Score
-		a.wall += float64(r.Metrics.WallDurationMS) / 1000
-		a.promptTPS += r.Metrics.PromptTokensPerSec
-		a.outTPS += r.Metrics.OutputTokensPerSec
+		if r.Error == "" {
+			a.completed++
+			a.wall = append(a.wall, float64(r.Metrics.WallDurationMS)/1000)
+			if r.Metrics.PromptRateValid {
+				a.promptTPS = append(a.promptTPS, r.Metrics.PromptTokensPerSec)
+			}
+			a.outTPS = append(a.outTPS, r.Metrics.OutputTokensPerSec)
+		}
 	}
 	models := make([]string, 0, len(by))
 	for m := range by {
@@ -48,7 +68,7 @@ func Print(results []bench.Result) {
 		cats = append(cats, c)
 	}
 	sort.Strings(cats)
-	fmt.Printf("%-38s %-15s %7s %8s %9s %10s %10s\n", "MODEL", "CATEGORY", "PASS", "SCORE", "WALL(s)", "PREFILL/s", "DECODE/s")
+	fmt.Printf("%-38s %-15s %7s %7s %5s %8s %9s %10s %10s\n", "MODEL", "CATEGORY", "PASS", "FORMAT", "ERROR", "SCORE", "WALL(s)", "PREFILL/s", "DECODE/s")
 	for _, m := range models {
 		for _, c := range cats {
 			a := by[m][c]
@@ -56,7 +76,32 @@ func Print(results []bench.Result) {
 				continue
 			}
 			n := float64(a.n)
-			fmt.Printf("%-38s %-15s %3d/%-3d %8.3f %9.1f %10.1f %10.1f\n", m, c, a.pass, a.n, a.score/n, a.wall/n, a.promptTPS/n, a.outTPS/n)
+			format := "-"
+			if a.formatN > 0 {
+				format = fmt.Sprintf("%d/%d", a.formatPass, a.formatN)
+			}
+			prefill := prefillDisplay(a)
+			fmt.Printf("%-38s %-15s %3d/%-3d %7s %5d %8.3f %9.1f %10s %10.1f\n", m, c, a.pass, a.n, format, a.errors, a.score/n, median(a.wall), prefill, median(a.outTPS))
 		}
 	}
+}
+
+func prefillDisplay(a *agg) string {
+	if a.completed == 0 || len(a.promptTPS) != a.completed {
+		return "N/A"
+	}
+	return fmt.Sprintf("%.1f", median(a.promptTPS))
+}
+
+func median(values []float64) float64 {
+	if len(values) == 0 {
+		return 0
+	}
+	values = append([]float64(nil), values...)
+	sort.Float64s(values)
+	mid := len(values) / 2
+	if len(values)%2 == 1 {
+		return values[mid]
+	}
+	return (values[mid-1] + values[mid]) / 2
 }

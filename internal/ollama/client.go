@@ -5,7 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -17,6 +19,7 @@ type Client struct {
 type Message struct {
 	Role      string     `json:"role"`
 	Content   string     `json:"content,omitempty"`
+	Thinking  string     `json:"thinking,omitempty"`
 	ToolCalls []ToolCall `json:"tool_calls,omitempty"`
 }
 
@@ -41,12 +44,13 @@ type ToolFunction struct {
 }
 
 type ChatRequest struct {
-	Model    string         `json:"model"`
-	Messages []Message      `json:"messages"`
-	Tools    []Tool         `json:"tools,omitempty"`
-	Format   any            `json:"format,omitempty"`
-	Stream   bool           `json:"stream"`
-	Options  map[string]any `json:"options,omitempty"`
+	Model     string         `json:"model"`
+	Messages  []Message      `json:"messages"`
+	Tools     []Tool         `json:"tools,omitempty"`
+	Format    any            `json:"format,omitempty"`
+	Stream    bool           `json:"stream"`
+	Options   map[string]any `json:"options,omitempty"`
+	KeepAlive any            `json:"keep_alive,omitempty"`
 }
 
 type ChatResponse struct {
@@ -62,8 +66,8 @@ type ChatResponse struct {
 	EvalDuration       int64   `json:"eval_duration"`
 }
 
-func New(baseURL string) *Client {
-	return &Client{BaseURL: baseURL, HTTP: &http.Client{Timeout: 30 * time.Minute}}
+func New(baseURL string, timeout time.Duration) *Client {
+	return &Client{BaseURL: strings.TrimRight(baseURL, "/"), HTTP: &http.Client{Timeout: timeout}}
 }
 
 func (c *Client) Chat(ctx context.Context, req ChatRequest) (ChatResponse, error) {
@@ -83,12 +87,57 @@ func (c *Client) Chat(ctx context.Context, req ChatRequest) (ChatResponse, error
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode/100 != 2 {
-		return out, fmt.Errorf("ollama returned %s", resp.Status)
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 8*1024))
+		return out, fmt.Errorf("ollama returned %s: %s", resp.Status, strings.TrimSpace(string(body)))
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
 		return out, err
 	}
 	return out, nil
+}
+
+// Unload asks Ollama to release a model immediately after its current work.
+func (c *Client) Unload(ctx context.Context, model string) error {
+	_, err := c.Chat(ctx, ChatRequest{Model: model, Messages: []Message{}, Stream: false, KeepAlive: 0})
+	return err
+}
+
+type RunningResponse struct {
+	Models []struct {
+		Name  string `json:"name"`
+		Model string `json:"model"`
+	} `json:"models"`
+}
+
+func (c *Client) RunningModels(ctx context.Context) ([]string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"/api/ps", nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode/100 != 2 {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 8*1024))
+		return nil, fmt.Errorf("ollama returned %s: %s", resp.Status, strings.TrimSpace(string(body)))
+	}
+	var running RunningResponse
+	if err := json.NewDecoder(resp.Body).Decode(&running); err != nil {
+		return nil, err
+	}
+	models := make([]string, 0, len(running.Models))
+	for _, model := range running.Models {
+		name := model.Name
+		if name == "" {
+			name = model.Model
+		}
+		if name != "" {
+			models = append(models, name)
+		}
+	}
+	return models, nil
 }
 
 type TagsResponse struct {
