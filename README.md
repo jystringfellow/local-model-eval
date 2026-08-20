@@ -16,7 +16,7 @@ The harness talks directly to Ollama's local `/api/chat` API. Coding tasks use a
 - macOS or Linux
 - Go 1.23+
 - Ollama running locally
-- the models in `bench.json` already pulled
+- at least one model installed in Ollama
 
 ## Quick start
 
@@ -24,8 +24,16 @@ The harness talks directly to Ollama's local `/api/chat` API. Coding tasks use a
 make build
 ./bin/lme doctor
 ./bin/lme list
-./bin/lme run --models qwen3.6:35b-mlx,north-mini-code-1.0:mlx-nvfp4
+./bin/lme models
+./bin/lme run
 ./bin/lme report
+./bin/lme diagnose
+```
+
+By default, `lme run` benchmarks every model currently reported by `ollama list`. To run a specific model or subset, pass a comma-separated override:
+
+```sh
+./bin/lme run --models qwen3.6:35b-mlx,north-mini-code-1.0:mlx-nvfp4
 ```
 
 Run only a category:
@@ -35,7 +43,17 @@ Run only a category:
 ./bin/lme run --category classification --models gemma4:12b-mlx,qwen3.6:35b-mlx
 ```
 
-Results are appended to `results/results.jsonl`. `lme report` prints a compact leaderboard based on pass rate plus speed metrics; it intentionally keeps category scores separate.
+Results are appended to `results/results.jsonl`. `lme report` reports the latest run by default and keeps category scores separate. `lme report --all` aggregates only the current benchmark version, and speed columns use medians. Classification rows show semantic accuracy in `SCORE` and exact requested-schema compliance in `FORMAT`. Unreliable backend prefill timings are displayed as `N/A`.
+
+Every `lme run` ends with an offline diagnosis by default; pass `--diagnose=false` when you only want raw progress output. `lme diagnose` regenerates the analysis for the latest saved run without making another model call. It reports infrastructure health, confidence from repeat counts, quality/speed/format recommendations, the quality-versus-wall-time Pareto frontier, benchmark cases that do not discriminate, consensus semantic mistakes, coding-agent failure modes, cases where a failed solution claimed its tests passed, and a finalist repeat command with an estimated runtime. Use `--run ID` for an older run or `--all` to diagnose all results from the current benchmark version.
+
+The default configuration uses a 32K context, caps each model response at 4K tokens, allows ten minutes per Ollama response, and allows two minutes per test command. After finishing a model's cases, the harness asks Ollama to unload it before moving on. Infrastructure failures are recorded, remaining cases continue, and the command exits nonzero after the sweep.
+
+On macOS, you can additionally prevent idle sleep during a long run:
+
+```sh
+caffeinate -i ./bin/lme run
+```
 
 ## Adding a coding benchmark
 
@@ -48,13 +66,13 @@ _cases/coding/my-task/
   hidden/         # verifier files NOT visible until scoring
 ```
 
-`case.json` describes the task and test command. The model gets four tools scoped to a temporary copy of `fixture/`: `list_files`, `read_file`, `write_file`, and `run_tests`. After the agent loop ends, the harness copies `hidden/` into the temp repo and executes the verifier.
+`case.json` describes the task and test command. The model gets four tools scoped to a temporary copy of `fixture/`: `list_files`, `read_file`, `write_file`, and `run_tests`. After the agent loop ends, the harness copies `hidden/` into the temp repo and executes the verifier. Results retain the complete assistant/tool transcript for diagnosing tool-use failures.
 
 Prefer small, self-contained fixtures with strong hidden tests. Keep network access unnecessary.
 
 ## Adding Workgraph-style classification cases
 
-Classification cases are JSON files in `_cases/classification/`. Each case provides project definitions, mixed artifacts, and expected project assignments. The model must return structured JSON, and the harness scores exact artifact-to-project accuracy.
+Classification cases are JSON files in `_cases/classification/`. Each case provides project definitions, mixed artifacts, and expected project assignments. Semantic accuracy is recovered from valid JSON, fenced JSON, common field aliases, and direct assignment maps. Exact compliance with the requested JSON schema is scored independently. The complete raw response is retained in the result.
 
 Good cases include:
 
