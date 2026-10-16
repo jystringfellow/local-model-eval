@@ -2,8 +2,8 @@
   "ollama_url": "http://localhost:11434",
   "context_size": 32768,
   "temperature": 0,
-  "max_agent_steps": 16,
-  "max_output_tokens": 4096,
-  "chat_timeout_seconds": 600,
+  "max_agent_steps": 32,
+  "max_output_tokens": 12288,
+  "chat_timeout_seconds": 1800,
   "test_timeout_seconds": 120
 }
