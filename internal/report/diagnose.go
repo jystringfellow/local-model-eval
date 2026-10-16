@@ -174,7 +174,22 @@ func writeRecommendations(b *strings.Builder, models []*modelDiagnosis) {
 	if len(models) == 0 {
 		return
 	}
-	quality := append([]*modelDiagnosis(nil), models...)
+	// A model that completed no samples has a 0-second suite wall time, which
+	// would otherwise make it the "throughput" leader and a frontier point while
+	// its quality is 0. Exclude it from every speed/frontier computation; it
+	// still appears in the model summary at quality 0.000.
+	active := make([]*modelDiagnosis, 0, len(models))
+	for _, m := range models {
+		if m.completed > 0 {
+			active = append(active, m)
+		}
+	}
+	if len(active) == 0 {
+		b.WriteString("\nRecommendations\n")
+		b.WriteString("  No model completed any sample; cannot rank by speed or quality. Review the model summary and infrastructure errors.\n")
+		return
+	}
+	quality := append([]*modelDiagnosis(nil), active...)
 	sort.SliceStable(quality, func(i, j int) bool {
 		if quality[i].quality() != quality[j].quality() {
 			return quality[i].quality() > quality[j].quality()
@@ -186,7 +201,7 @@ func writeRecommendations(b *strings.Builder, models []*modelDiagnosis) {
 	})
 	qualityLeader := quality[0]
 
-	speed := append([]*modelDiagnosis(nil), models...)
+	speed := append([]*modelDiagnosis(nil), active...)
 	sort.SliceStable(speed, func(i, j int) bool {
 		if speed[i].suiteWallSeconds() != speed[j].suiteWallSeconds() {
 			return speed[i].suiteWallSeconds() < speed[j].suiteWallSeconds()
@@ -197,14 +212,14 @@ func writeRecommendations(b *strings.Builder, models []*modelDiagnosis) {
 
 	balanced := qualityLeader
 	qualityFloor := qualityLeader.quality() * balancedQualityFraction
-	for _, m := range models {
+	for _, m := range active {
 		if m.quality() >= qualityFloor && m.suiteWallSeconds() < balanced.suiteWallSeconds() {
 			balanced = m
 		}
 	}
 
 	var formatLeader *modelDiagnosis
-	for _, m := range models {
+	for _, m := range active {
 		if m.formatN == 0 {
 			continue
 		}
@@ -222,7 +237,7 @@ func writeRecommendations(b *strings.Builder, models []*modelDiagnosis) {
 	if formatLeader != nil {
 		fmt.Fprintf(b, "  Structured output: %s (%d/%d exact-format responses).\n", formatLeader.name, formatLeader.formatPass, formatLeader.formatN)
 	}
-	frontier := paretoFrontier(models)
+	frontier := paretoFrontier(active)
 	names := make([]string, 0, len(frontier))
 	for _, m := range frontier {
 		names = append(names, m.name)
